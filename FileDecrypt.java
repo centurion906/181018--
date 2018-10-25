@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.*;
 
 public class FileDecrypt extends JFrame {
     Container cp;
@@ -25,13 +26,15 @@ public class FileDecrypt extends JFrame {
     private JButton jbtnadd = new JButton("選擇檔案");
     private JButton jbtnup = new JButton("上傳檔案");
     private JProgressBar jpb = new JProgressBar();          //輸出條
+    private JFileChooser jfc = new JFileChooser();
+    private String loadFileName;
     Frame2 frm7;
     public FileDecrypt(Frame2 frm8){
         frm7 = frm8;
         ex1();
     }private void ex1(){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setBounds(100,100,500,150);
+        this.setBounds(100,100,500,250);
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -57,10 +60,55 @@ public class FileDecrypt extends JFrame {
         jpnC.add(jftS);
         jpnE.add(jbtnadd);
         jpnE.add(jbtnup);
+        jbtnadd.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (jfc.showOpenDialog(FileDecrypt.this) == JFileChooser.APPROVE_OPTION){
+                    loadFileName = jfc.getSelectedFile().getPath();
+                    jftO.setText(jfc.getSelectedFile().getPath());
+                    jftS.setText(jftO.getText()+".sec");
+                }
+            }
+        });
+        jbtnRN.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (loadFileName.equals("")){
+                    JOptionPane.showMessageDialog(FileDecrypt.this,"No File Select!");
+                }else {
+                    try {
+                        File SelectFile = new File(jftO.getText());
+                        long fileLength = SelectFile.length();
+                        jpb.setMaximum(100);
+                        char key[] = jftkey.getText().toCharArray();
+                        FileReader fr = new FileReader(SelectFile);
+                        BufferedReader bfr = new BufferedReader(fr);
+                        File writerFile = new File(jftS.getText());
+                        FileWriter fw = new FileWriter(writerFile);
+                        BufferedWriter bfw = new BufferedWriter(fw);
+                        int data;
+                        int i = 0;
+                        while ((data = bfr.read()) != -1 ){
+                            data = data ^ key[i % key.length];
+                            bfw.write(data);
+                            i++;
+                            jpb.setValue(Math.round((float)i/fileLength*100));
+                        }
+                        bfw.close();
+                        fr.close();
+                        JOptionPane.showMessageDialog(FileDecrypt.this,"Finish!");
+                    }catch (Exception ioe1){
+                        JOptionPane.showMessageDialog(FileDecrypt.this,"No file Selected"+ioe1.toString());
+                    }
+                }
+            }
+        });
         jbtnClose.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.exit(0);
+                Frame2 frm9 = new Frame2();
+                frm9.setVisible(true);
+                FileDecrypt.this.dispose();
             }
         });
     }
